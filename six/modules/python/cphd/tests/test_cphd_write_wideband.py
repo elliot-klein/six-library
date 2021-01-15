@@ -59,6 +59,7 @@ def main():
 
         # Check that we correctly wrote the wideband data
         reader = CPHDReader(cphd_filepath, SCRATCH_SPACE)
+        reader_support_arrays = reader.get_support_arrays(NUM_THREADS)  # support arrays are in np.bytes_
 
         if reader.getMetadata() != metadata:
             print('Test failed, original metadata and metadata from file differ')
@@ -75,6 +76,13 @@ def main():
             if not np.array_equal(reader.getPHD(channel), widebands[channel]):
                 print('Test failed, original wideband and PHD from file differ in channel {0}'
                       .format(channel))
+                sys.exit(1)
+            if not np.array_equal(reader_support_arrays[channel].view(support_arrays[channel].dtype),
+                                  support_arrays[channel]):
+                print(reader_support_arrays[channel].view(support_arrays[channel].dtype))
+                print(support_arrays[channel])
+                print('Test failed, original support array and support array from '
+                      'file differ in channel {0}'.format(channel))
                 sys.exit(1)
 
         print('Test passed')

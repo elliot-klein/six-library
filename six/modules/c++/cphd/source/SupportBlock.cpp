@@ -80,22 +80,21 @@ void SupportBlock::read(const std::string& id,
                         size_t numThreads,
                         const mem::BufferView<sys::ubyte>& data) const
 {
-    const size_t minSize = mData.getSupportArrayById(id).getSize();
+    const size_t size = mData.getSupportArrayById(id).getSize();
 
-    if (data.size < minSize)
+    if (data.size < size)
     {
         std::ostringstream ostr;
-        ostr << "Need at least " << minSize << " bytes but only got "
+        ostr << "Need at least " << size << " bytes but only got "
              << data.size;
         throw except::Exception(Ctxt(ostr.str()));
     }
     // Perform the read
     // Compute the byte offset into this SupportArray in the CPHD file
-    // First to the start of the first support array we're going to read
+    // Seek to the start of the first support array we're going to read
     sys::Off_T inOffset = getFileOffset(id);
     sys::byte* dataPtr = reinterpret_cast<sys::byte*>(data.data);
     mInStream->seek(inOffset, io::FileInputStream::START);
-    size_t size = mData.getSupportArrayById(id).getSize();
     mInStream->read(dataPtr, size);
 
     if (!sys::isBigEndianSystem() && mData.getElementSize(id) > 1)

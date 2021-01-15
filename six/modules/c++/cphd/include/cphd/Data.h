@@ -26,7 +26,6 @@
 #include <ostream>
 #include <vector>
 #include <map>
-#include <unordered_map>
 #include <assert.h>
 #include <stddef.h>
 
@@ -311,9 +310,9 @@ public:
     //! of decompression
     std::string signalCompressionID;
 
-    //! (Optional) Unordered map key: unique identifier string,
+    //! (Optional) Map key: unique identifier string,
     //! value: supportArray object
-    std::unordered_map<std::string, SupportArray> supportArrayMap;
+    std::map<std::string, SupportArray> supportArrayMap;
 
 private:
     // Custom comparator

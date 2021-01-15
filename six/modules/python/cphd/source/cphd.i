@@ -624,6 +624,47 @@ void writeWideband(const Metadata& metadata,
         )
 %}
 
+// Note the distinction between cphd::SupportArray and cphd::Data::SupportArray
+%template(MapStringDataSupportArray) std::map<std::string, cphd::Data::SupportArray>;
+
+%extend cphd::CPHDReader
+{
+%pythoncode
+%{
+    import multiprocessing
+    import numpy as np
+
+    def get_support_arrays(self, num_threads=multiprocessing.cpu_count()):
+        support_arrays = []
+        for identifier, support_array in self.getMetadata().data.supportArrayMap.items():
+            support_array_data = np.empty(shape=(support_array.numRows,
+                                                 support_array.numCols * support_array.bytesPerElement),
+                                          dtype=np.bytes_)
+            if not support_array_data.flags['C_CONTIGUOUS']:
+                support_array_data = np.ascontiguousarray(support_array_data)
+            assert support_array_data.flags['C_CONTIGUOUS'], \
+                'Could not make support array data contiguous'
+            pointer, ro = support_array_data.__array_interface__['data']
+            self.getSupportBlock().read(identifier, support_array.getSize(), pointer, num_threads)
+            support_arrays.append(support_array_data)
+        return support_arrays
+%}
+}
+
+%extend cphd::SupportBlock
+{
+    // Need to expose a way to create a BufferView from a pointer to NumPy array data
+    void read(const std::string& identifier,
+              const size_t bufSize,
+              long long dataPointer,
+              const size_t numThreads)
+    {
+        mem::BufferView<sys::ubyte> buffer(reinterpret_cast<sys::ubyte*>(dataPointer),
+                                                 bufSize);
+        $self->read(identifier, numThreads, buffer);
+    }
+}
+
 %pythoncode
 %{
 import numpy
